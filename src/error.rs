@@ -3,6 +3,7 @@ use axum::{http::StatusCode, response::IntoResponse};
 pub enum AppError {
     EmailTaken,
     InternalError,
+    InvalidCredentials,
 }
 
 impl IntoResponse for AppError {
@@ -13,6 +14,7 @@ impl IntoResponse for AppError {
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "Something went wrong. Please try again.",
             ),
+            AppError::InvalidCredentials => (StatusCode::UNAUTHORIZED, "Invalid Email or Password"),
         };
 
         (status, message).into_response()

@@ -2,7 +2,7 @@ create table users(
 	id uuid primary key, 
 	email text not null unique, 
 	pass_hash text not null, 
-	created_at timestamptz default current_timestamp
+	created_at timestamptz default current_timestamp not null
 );
 
 create table files(
@@ -15,6 +15,3 @@ create table files(
 	user_id uuid not null,
 	foreign key (user_id) references users(id)
 );
-
-
-
