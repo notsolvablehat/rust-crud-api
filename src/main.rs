@@ -1,9 +1,12 @@
 use axum::extract::State;
+use axum::routing::post;
 use axum::{Router, routing::get};
 
 mod db;
+mod error;
+mod handlers;
+mod models;
 mod state;
-
 use state::AppState;
 
 #[tokio::main]
@@ -18,6 +21,7 @@ async fn main() {
         .route("/", get(|| async { "Yo" }))
         .route("/health", get(|| async { "I am healthy." }))
         .route("/db-health", get(db_health))
+        .route("/signup", post(handlers::signup::signup))
         .with_state(state);
 
     let addr = String::from("0.0.0.0:3000");
