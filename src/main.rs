@@ -28,6 +28,7 @@ async fn main() {
         .route("/db-health", get(db_health))
         .route("/signup", post(handlers::signup::signup))
         .route("/login", post(handlers::login::login))
+        .route("/me", get(handlers::me::me))
         .with_state(state);
 
     let addr = String::from("0.0.0.0:3000");

@@ -4,6 +4,7 @@ pub enum AppError {
     EmailTaken,
     InternalError,
     InvalidCredentials,
+    Unauthorized,
 }
 
 impl IntoResponse for AppError {
@@ -15,6 +16,7 @@ impl IntoResponse for AppError {
                 "Something went wrong. Please try again.",
             ),
             AppError::InvalidCredentials => (StatusCode::UNAUTHORIZED, "Invalid Email or Password"),
+            AppError::Unauthorized => (StatusCode::UNAUTHORIZED, "Invalid Credentials."),
         };
 
         (status, message).into_response()
