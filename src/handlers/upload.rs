@@ -16,9 +16,12 @@ pub async fn upload(
 ) -> Result<impl IntoResponse, AppError> {
     let field = match multipart.next_field().await {
         Ok(Some(f)) => f,
-        Ok(None) => return Err(AppError::BadRequest),
+        Ok(None) => {
+            tracing::warn!(user_id = %auth_user.user_id, "upload attempt with no file field");
+            return Err(AppError::BadRequest);
+        }
         Err(e) => {
-            eprintln!("multipart next_field error: {:?}", e);
+            tracing::error!(error = ?e, "failed to read multipart field");
             return Err(AppError::InternalError);
         }
     };
@@ -32,7 +35,7 @@ pub async fn upload(
     let data = match field.bytes().await {
         Ok(b) => b,
         Err(e) => {
-            eprintln!("field bytes error: {:?}", e);
+            tracing::error!(error = ?e, "failed to read uploaded file bytes");
             return Err(AppError::InternalError);
         }
     };
@@ -52,7 +55,7 @@ pub async fn upload(
         .await;
 
     if let Err(e) = put_result {
-        eprintln!("r2 put_object error: {:?}", e);
+        tracing::error!(error = ?e, object_key = %object_key, "failed to upload object to r2");
         return Err(AppError::InternalError);
     }
 
@@ -71,7 +74,7 @@ pub async fn upload(
         )),
 
         Err(e) => {
-            eprintln!("db insert error: {:?}", e);
+            tracing::error!(error = ?e, file_id = %file_id, "failed to insert file record");
             Err(AppError::InternalError)
         }
     }

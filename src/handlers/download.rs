@@ -22,8 +22,14 @@ pub async fn download(
     .await
     {
         Ok(Some(f)) => f,
-        Ok(None) => return Err(AppError::NotFound),
-        Err(_) => return Err(AppError::InternalError),
+        Ok(None) => {
+            tracing::warn!(user_id = %auth_user.user_id, file_id = %file_id, "download attempt for missing or unowned file");
+            return Err(AppError::NotFound);
+        }
+        Err(e) => {
+            tracing::error!(error = ?e, "failed to query file record");
+            return Err(AppError::InternalError);
+        }
     };
 
     let get_result = state
@@ -36,12 +42,18 @@ pub async fn download(
 
     let object = match get_result {
         Ok(o) => o,
-        Err(_) => return Err(AppError::InternalError),
+        Err(e) => {
+            tracing::error!(error = ?e, object_key = %file.stored_file_name, "failed to fetch object from r2");
+            return Err(AppError::InternalError);
+        }
     };
 
     let bytes = match object.body.collect().await {
         Ok(b) => b.into_bytes(),
-        Err(_) => return Err(AppError::InternalError),
+        Err(e) => {
+            tracing::error!(error = ?e, "failed to collect object body");
+            return Err(AppError::InternalError);
+        }
     };
 
     Ok((

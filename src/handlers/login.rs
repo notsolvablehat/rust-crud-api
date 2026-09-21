@@ -19,20 +19,30 @@ pub async fn login(
             .await
         {
             Ok(u) => u,
-            Err(_) => return Err(AppError::InternalError),
+            Err(e) => {
+                tracing::error!(error = ?e, "failed to query user by email");
+                return Err(AppError::InternalError);
+            }
         };
 
     let user = match maybe_user {
         Some(u) => u,
-        None => return Err(AppError::InvalidCredentials),
+        None => {
+            tracing::warn!(email = %payload.email, "login attempt for unknown email");
+            return Err(AppError::InvalidCredentials);
+        }
     };
 
     let password_ok = match bcrypt::verify(&payload.password, &user.pass_hash) {
         Ok(matches) => matches,
-        Err(_) => return Err(AppError::InternalError),
+        Err(e) => {
+            tracing::error!(error = ?e, "failed to verify password hash");
+            return Err(AppError::InternalError);
+        }
     };
 
     if !password_ok {
+        tracing::warn!(user_id = %user.id, "login attempt with wrong password");
         return Err(AppError::InvalidCredentials);
     }
 
@@ -47,7 +57,10 @@ pub async fn login(
         &EncodingKey::from_secret(state.jwt_secret.as_bytes()),
     ) {
         Ok(t) => t,
-        Err(_) => return Err(AppError::InternalError),
+        Err(e) => {
+            tracing::error!(error = ?e, "failed to encode jwt");
+            return Err(AppError::InternalError);
+        }
     };
 
     Ok(Json(LoginResponse { token }))

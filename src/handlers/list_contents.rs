@@ -18,7 +18,10 @@ pub async fn list_contents(
     .await
     {
         Ok(f) => f,
-        Err(_) => return Err(AppError::InternalError),
+        Err(e) => {
+            tracing::error!(error = ?e, "failed to list files for user");
+            return Err(AppError::InternalError);
+        }
     };
 
     let response = files

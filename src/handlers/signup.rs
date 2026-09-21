@@ -13,7 +13,10 @@ pub async fn signup(
 ) -> Result<impl IntoResponse, AppError> {
     let pass_hash = match bcrypt::hash(&payload.password, bcrypt::DEFAULT_COST) {
         Ok(hash) => hash,
-        Err(_) => return Err(AppError::InternalError),
+        Err(e) => {
+            tracing::error!(error = ?e, "failed to hash password");
+            return Err(AppError::InternalError);
+        }
     };
 
     let id = Uuid::new_v4();
@@ -37,9 +40,13 @@ pub async fn signup(
         }
 
         Err(sqlx::Error::Database(db_err)) if db_err.is_unique_violation() => {
+            tracing::warn!(email = %payload.email, "signup attempt with existing email");
             Err(AppError::EmailTaken)
         }
 
-        Err(_) => Err(AppError::InternalError),
+        Err(e) => {
+            tracing::error!(error = ?e, "failed to insert new user");
+            Err(AppError::InternalError)
+        }
     }
 }

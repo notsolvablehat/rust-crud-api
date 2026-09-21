@@ -10,10 +10,12 @@ mod models;
 mod r2;
 mod state;
 use state::AppState;
+use tower_http::trace::TraceLayer;
 
 #[tokio::main]
 async fn main() {
     dotenvy::dotenv().ok();
+    tracing_subscriber::fmt::init();
 
     let pool = db::connect_db().await.expect("Failed to connect to DB.");
     let jwt = std::env::var("JWT_SECRET").expect("JWT_SECRET should be set.");
@@ -40,6 +42,7 @@ async fn main() {
             "/list-contents",
             get(handlers::list_contents::list_contents),
         )
+        .layer(TraceLayer::new_for_http())
         .with_state(state);
 
     let addr = String::from("0.0.0.0:3000");

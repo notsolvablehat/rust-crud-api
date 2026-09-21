@@ -24,14 +24,23 @@ impl FromRequestParts<AppState> for AuthUser {
         let header_val = match parts.headers.get("authorization") {
             Some(header) => match header.to_str() {
                 Ok(s) => s,
-                Err(_) => return Err(AppError::Unauthorized),
+                Err(e) => {
+                    tracing::warn!(error = ?e, "authorization header was not valid utf-8");
+                    return Err(AppError::Unauthorized);
+                }
             },
-            None => return Err(AppError::Unauthorized),
+            None => {
+                tracing::warn!("request missing authorization header");
+                return Err(AppError::Unauthorized);
+            }
         };
 
         let token = match header_val.strip_prefix("Bearer ") {
             Some(t) => t,
-            None => return Err(AppError::InvalidCredentials),
+            None => {
+                tracing::warn!("authorization header missing Bearer prefix");
+                return Err(AppError::InvalidCredentials);
+            }
         };
 
         let claims = match jsonwebtoken::decode::<Claims>(
@@ -40,7 +49,10 @@ impl FromRequestParts<AppState> for AuthUser {
             &Validation::default(),
         ) {
             Ok(data) => data.claims,
-            Err(_) => return Err(AppError::InvalidCredentials),
+            Err(e) => {
+                tracing::warn!(error = ?e, "jwt validation failed");
+                return Err(AppError::InvalidCredentials);
+            }
         };
 
         Ok(AuthUser {
