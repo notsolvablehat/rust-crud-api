@@ -1,0 +1,4 @@
+2026-09-21T08:50:35.511816Z  WARN crud_api::handlers::signup: signup attempt with existing email email=logtest_1789980633@example.com
+2026-09-21T08:50:36.390213Z  WARN crud_api::handlers::login: login attempt with wrong password user_id=4565885f-0e85-4c66-8ada-89adb86a4c7e
+2026-09-21T08:50:37.272857Z  WARN crud_api::auth: request missing authorization header
+2026-09-21T08:50:37.297232Z  WARN crud_api::handlers::download: download attempt for missing or unowned file user_id=4565885f-0e85-4c66-8ada-89adb86a4c7e file_id=00000000-0000-0000-0000-000000000000
