@@ -15,3 +15,5 @@ create table files(
 	user_id uuid not null,
 	foreign key (user_id) references users(id)
 );
+
+select * from users;
