@@ -5,6 +5,8 @@ pub enum AppError {
     InternalError,
     InvalidCredentials,
     Unauthorized,
+    NotFound,
+    BadRequest,
 }
 
 impl IntoResponse for AppError {
@@ -17,6 +19,11 @@ impl IntoResponse for AppError {
             ),
             AppError::InvalidCredentials => (StatusCode::UNAUTHORIZED, "Invalid Email or Password"),
             AppError::Unauthorized => (StatusCode::UNAUTHORIZED, "Invalid Credentials."),
+            AppError::NotFound => (StatusCode::NOT_FOUND, "Couldn't find the requested item."),
+            AppError::BadRequest => (
+                StatusCode::BAD_REQUEST,
+                "Bad request. Try changing fields according to API documentation.",
+            ),
         };
 
         (status, message).into_response()

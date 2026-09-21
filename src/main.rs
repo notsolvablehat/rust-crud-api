@@ -7,6 +7,7 @@ mod db;
 mod error;
 mod handlers;
 mod models;
+mod r2;
 mod state;
 use state::AppState;
 
@@ -16,10 +17,14 @@ async fn main() {
 
     let pool = db::connect_db().await.expect("Failed to connect to DB.");
     let jwt = std::env::var("JWT_SECRET").expect("JWT_SECRET should be set.");
+    let r2 = r2::build_r2_client().await;
+    let r2_bucket = std::env::var("R2_BUCKET_NAME").expect("R2_BUCKET_NAME should be set.");
 
     let state = AppState {
         db: pool,
         jwt_secret: jwt,
+        r2_bucket,
+        r2,
     };
 
     let app = Router::new()
@@ -29,6 +34,12 @@ async fn main() {
         .route("/signup", post(handlers::signup::signup))
         .route("/login", post(handlers::login::login))
         .route("/me", get(handlers::me::me))
+        .route("/upload", post(handlers::upload::upload))
+        .route("/download/{file_id}", get(handlers::download::download))
+        .route(
+            "/list-contents",
+            get(handlers::list_contents::list_contents),
+        )
         .with_state(state);
 
     let addr = String::from("0.0.0.0:3000");
